@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">AndroidAlarm</string>
+    <string name="pick_a_time">Pick a time</string>
+    <string name="set_alarm">Set alarm</string>
+    <string name="cancel_alarm">Cancel alarm</string>
+    <string name="status_off">No alarm set</string>
+    <string name="status_on">Alarm set for %1$s</string>
+    <string name="alarm_set_for">Alarm set for %1$s</string>
+    <string name="alarm_ringing">Alarm!</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="notifications_denied">Notifications are disabled; the alarm may not alert you.</string>
+    <string name="grant_exact_alarm">Please allow exact alarms for this app, then tap Set again.</string>
+</resources>
