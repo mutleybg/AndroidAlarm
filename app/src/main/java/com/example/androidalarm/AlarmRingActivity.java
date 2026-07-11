@@ -1,23 +1,34 @@
 package com.example.androidalarm;
 
-import android.media.Ringtone;
-import android.media.RingtoneManager;
-import android.net.Uri;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
 
 import com.example.androidalarm.databinding.ActivityRingBinding;
 
 /**
- * Full-screen activity shown when the alarm fires. It plays the default alarm
- * ringtone and vibrates until the user dismisses it. Declared in the manifest
- * with showWhenLocked/turnScreenOn so it appears over the lock screen.
+ * Full-screen ring UI, launched by {@link AlarmService}'s full-screen-intent
+ * notification. Declared in the manifest with showWhenLocked/turnScreenOn so it
+ * appears over the lock screen. It no longer plays the sound itself — the
+ * service owns the ring lifecycle; this screen only shows "Dismiss" (which tells
+ * the service to stop) and closes itself when the service says the alarm ended.
  */
 public class AlarmRingActivity extends BaseActivity {
 
-    private Ringtone ringtone;
-    private Vibrator vibrator;
+    /** Broadcast from {@link AlarmService} telling this screen to close. */
+    static final String ACTION_FINISH = "com.example.androidalarm.action.FINISH_RING";
+
+    private int index;
+
+    private final BroadcastReceiver finishReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            finish();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,44 +36,36 @@ public class AlarmRingActivity extends BaseActivity {
         ActivityRingBinding binding = ActivityRingBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        binding.dismissButton.setOnClickListener(v -> finish());
+        index = getIntent().getIntExtra(AlarmScheduler.EXTRA_INDEX, 0);
+        binding.dismissButton.setOnClickListener(v -> dismiss());
 
-        startRinging();
-        startVibrating();
-    }
-
-    private void startRinging() {
-        Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-        if (alarmUri == null) {
-            alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-        }
-        ringtone = RingtoneManager.getRingtone(this, alarmUri);
-        if (ringtone != null) {
-            ringtone.play();
-        }
-    }
-
-    private void startVibrating() {
-        vibrator = getSystemService(Vibrator.class);
-        if (vibrator == null || !vibrator.hasVibrator()) {
-            return;
-        }
-        long[] pattern = {0, 1000, 1000};
-        vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0));
-    }
-
-    private void stopAll() {
-        if (ringtone != null && ringtone.isPlaying()) {
-            ringtone.stop();
-        }
-        if (vibrator != null) {
-            vibrator.cancel();
+        IntentFilter filter = new IntentFilter(ACTION_FINISH);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(finishReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(finishReceiver, filter);
         }
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        index = intent.getIntExtra(AlarmScheduler.EXTRA_INDEX, index);
+    }
+
+    /** Stop the alarm: hand off to the service, which cancels any re-ring. */
+    private void dismiss() {
+        Intent stop = new Intent(this, AlarmService.class);
+        stop.setAction(AlarmService.ACTION_DISMISS);
+        stop.putExtra(AlarmScheduler.EXTRA_INDEX, index);
+        startService(stop);
+        finish();
+    }
+
+    @Override
     protected void onDestroy() {
-        stopAll();
+        unregisterReceiver(finishReceiver);
         super.onDestroy();
     }
 }

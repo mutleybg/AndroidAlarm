@@ -31,9 +31,18 @@ public final class AlarmScheduler {
 
     /** Passed to {@link AlarmReceiver} so it knows which alarm fired. */
     static final String EXTRA_INDEX = "alarm_index";
+    /** 1 when the fire is the single automatic re-ring, 0 for a normal trigger. */
+    static final String EXTRA_RERUN = "alarm_rerun";
 
     /** Distinct request code (hence distinct PendingIntent) per alarm. */
     private static final int REQUEST_CODE_BASE = 1000;
+    /** Request-code base for the automatic re-ring PendingIntents. */
+    private static final int RERUN_REQUEST_CODE_BASE = 2000;
+
+    /** How long the alarm rings before it gives up if left undismissed (ms). */
+    public static final long RING_TIMEOUT_MS = 60_000L;
+    /** Silent gap before the single automatic re-ring (ms). */
+    private static final long RERUN_DELAY_MS = 60_000L;
 
     private AlarmScheduler() {
     }
@@ -96,8 +105,28 @@ public final class AlarmScheduler {
 
     /** Cancels the OS alarm for this index (leaves saved settings alone). */
     public static void cancel(Context context, int index) {
+        AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
+        alarmManager.cancel(alarmPendingIntent(context, index));
+        // Turning an alarm off also drops any pending automatic re-ring.
+        alarmManager.cancel(rerunPendingIntent(context, index));
+    }
+
+    /**
+     * Arms the single automatic re-ring one minute from now. Called when a ring
+     * is left undismissed so the alarm gets one more chance to wake the user.
+     */
+    public static void scheduleRerun(Context context, int index) {
+        long triggerAt = System.currentTimeMillis() + RERUN_DELAY_MS;
+        AlarmManager alarmManager = context.getSystemService(AlarmManager.class);
+        AlarmManager.AlarmClockInfo info =
+                new AlarmManager.AlarmClockInfo(triggerAt, showIntent(context, index));
+        alarmManager.setAlarmClock(info, rerunPendingIntent(context, index));
+    }
+
+    /** Cancels a pending automatic re-ring, if any (e.g. when dismissed). */
+    public static void cancelRerun(Context context, int index) {
         context.getSystemService(AlarmManager.class)
-                .cancel(alarmPendingIntent(context, index));
+                .cancel(rerunPendingIntent(context, index));
     }
 
     /**
@@ -183,6 +212,16 @@ public final class AlarmScheduler {
         intent.putExtra(EXTRA_INDEX, index);
         return PendingIntent.getBroadcast(
                 context, REQUEST_CODE_BASE + index, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    /** PendingIntent for the automatic re-ring; carries EXTRA_RERUN = 1. */
+    private static PendingIntent rerunPendingIntent(Context context, int index) {
+        Intent intent = new Intent(context, AlarmReceiver.class);
+        intent.putExtra(EXTRA_INDEX, index);
+        intent.putExtra(EXTRA_RERUN, 1);
+        return PendingIntent.getBroadcast(
+                context, RERUN_REQUEST_CODE_BASE + index, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Аларма</string>
+    <string name="app_name">Аларма 2</string>
 
     <string name="alarm_title">Аларма %1$d</string>
     <string name="label_hour">Час</string>
@@ -19,8 +19,16 @@
         <item>Н</item>
     </string-array>
 
+    <string name="alarm_channel_name">Аларма</string>
+    <string name="alarm_channel_desc">Показва звънящата аларма</string>
+
     <string name="alarm_ringing">Аларма!</string>
     <string name="dismiss">Спри</string>
     <string name="notifications_denied">Известията са изключени; алармата може да не ви сигнализира.</string>
     <string name="grant_exact_alarm">Разрешете точни аларми за това приложение, след което включете алармата отново.</string>
+
+    <string name="hint_title">Надеждни аларми</string>
+    <string name="hint_message">На някои телефони (Xiaomi, realme и други) системата може да спре алармата, когато приложението е затворено. За да звънят алармите надеждно, разрешете „Автостартиране“ за това приложение и изключете оптимизацията на батерията за него.\n\nДа отворим ли настройките на приложението, за да ги проверите сега?</string>
+    <string name="hint_open_settings">Отвори настройките</string>
+    <string name="hint_dismiss">Разбрах</string>
 </resources>

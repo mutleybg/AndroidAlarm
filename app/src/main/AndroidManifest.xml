@@ -10,6 +10,11 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Wake the screen / show the alarm over the lock screen. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Launch the ring screen over the lock screen when the app is closed. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Ring via a foreground service so it sounds even when the app is closed. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
         android:allowBackup="true"
@@ -36,6 +41,12 @@
             android:launchMode="singleInstance"
             android:showWhenLocked="true"
             android:turnScreenOn="true" />
+
+        <!-- Foreground service that rings the alarm (started by AlarmReceiver). -->
+        <service
+            android:name=".AlarmService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <!-- Receives the AlarmManager broadcast when an alarm is due. -->
         <receiver
