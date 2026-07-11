@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  One alarm's controls: title, Hour/Min numeric fields, an on/off switch, and a
+  row of seven day toggles. Inflated by AlarmPanelView (merged into its root).
+-->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textAppearance="?attr/textAppearanceHeadlineMedium"
+        tools:text="Alarm 1" />
+
+    <!-- Hour field | Min field | on/off switch -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/hourLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                tools:text="Hour" />
+
+            <EditText
+                android:id="@+id/hourField"
+                android:layout_width="76dp"
+                android:layout_height="64dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/number_field_bg"
+                android:gravity="center"
+                android:importantForAutofill="no"
+                android:inputType="number"
+                android:maxLength="2"
+                android:textColor="@color/black"
+                android:textSize="26sp"
+                tools:text="06" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/minLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                tools:text="Min" />
+
+            <EditText
+                android:id="@+id/minField"
+                android:layout_width="76dp"
+                android:layout_height="64dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/number_field_bg"
+                android:gravity="center"
+                android:importantForAutofill="no"
+                android:inputType="number"
+                android:maxLength="2"
+                android:textColor="@color/black"
+                android:textSize="26sp"
+                tools:text="45" />
+        </LinearLayout>
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/enableSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:gravity="end|center_vertical" />
+    </LinearLayout>
+
+    <!-- Seven day toggles are added programmatically into this row. -->
+    <LinearLayout
+        android:id="@+id/daysRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal" />
+
+</merge>

@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Аларма</string>
+
+    <string name="alarm_title">Аларма %1$d</string>
+    <string name="label_hour">Час</string>
+    <string name="label_min">Мин</string>
+
+    <!-- Понеделник, Вторник, Сряда, Четвъртък, Петък, Събота, Неделя -->
+    <string-array name="day_letters">
+        <item>П</item>
+        <item>В</item>
+        <item>С</item>
+        <item>Ч</item>
+        <item>П</item>
+        <item>С</item>
+        <item>Н</item>
+    </string-array>
+
+    <string name="alarm_ringing">Аларма!</string>
+    <string name="dismiss">Спри</string>
+    <string name="notifications_denied">Известията са изключени; алармата може да не ви сигнализира.</string>
+    <string name="grant_exact_alarm">Разрешете точни аларми за това приложение, след което включете алармата отново.</string>
+</resources>

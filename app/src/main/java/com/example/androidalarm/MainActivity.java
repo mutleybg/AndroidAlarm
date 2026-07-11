@@ -12,22 +12,20 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.example.androidalarm.databinding.ActivityMainBinding;
 
-import java.util.Locale;
-
 /**
- * Single screen: pick a time, then enable or cancel the alarm. Also handles the
- * two permission gates modern Android imposes on alarm apps: notifications
- * (Android 13+) and exact-alarm scheduling (Android 12+).
+ * The main screen: two alarm panels, each taking half the screen. Every edit is
+ * saved and (re)scheduled immediately. Also handles the two permission gates
+ * modern Android imposes on alarm apps: notifications (Android 13+) and
+ * exact-alarm scheduling (Android 12+).
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
 
     private ActivityMainBinding binding;
+    private AlarmPanelView[] panels;
 
     private final ActivityResultLauncher<String> notificationPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
@@ -42,46 +40,36 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        binding.timePicker.setIs24HourView(true);
-        binding.timePicker.setHour(AlarmScheduler.getHour(this));
-        binding.timePicker.setMinute(AlarmScheduler.getMinute(this));
-
-        binding.setButton.setOnClickListener(v -> onSetClicked());
-        binding.cancelButton.setOnClickListener(v -> {
-            AlarmScheduler.cancel(this);
-            refreshStatus();
-        });
+        panels = new AlarmPanelView[]{binding.alarmPanel1, binding.alarmPanel2};
+        for (int i = 0; i < panels.length; i++) {
+            final int index = i;
+            AlarmPanelView panel = panels[i];
+            panel.setTitle(getString(R.string.alarm_title, i + 1));
+            panel.setState(
+                    AlarmScheduler.getHour(this, i),
+                    AlarmScheduler.getMinute(this, i),
+                    AlarmScheduler.getDaysMask(this, i),
+                    AlarmScheduler.isEnabled(this, i));
+            panel.setOnChangeListener(() -> onPanelChanged(index));
+        }
 
         maybeRequestNotificationPermission();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        refreshStatus();
-    }
+    /** A panel changed: enforce the exact-alarm gate, then save and schedule. */
+    private void onPanelChanged(int index) {
+        AlarmPanelView panel = panels[index];
+        boolean enabled = panel.isAlarmEnabled();
 
-    private void onSetClicked() {
-        if (!canScheduleExactAlarms()) {
+        if (enabled && !canScheduleExactAlarms()) {
+            panel.setSwitchChecked(false);
             requestExactAlarmPermission();
             return;
         }
-        int hour = binding.timePicker.getHour();
-        int minute = binding.timePicker.getMinute();
-        AlarmScheduler.schedule(this, hour, minute);
-        Toast.makeText(this,
-                getString(R.string.alarm_set_for, formatTime(hour, minute)),
-                Toast.LENGTH_SHORT).show();
-        refreshStatus();
-    }
 
-    private void refreshStatus() {
-        if (AlarmScheduler.isEnabled(this)) {
-            binding.statusText.setText(getString(R.string.status_on,
-                    formatTime(AlarmScheduler.getHour(this), AlarmScheduler.getMinute(this))));
-        } else {
-            binding.statusText.setText(R.string.status_off);
-        }
+        AlarmScheduler.save(this, index,
+                panel.getHour(), panel.getMinute(), panel.getDaysMask(), enabled);
+        AlarmScheduler.apply(this, index);
     }
 
     private boolean canScheduleExactAlarms() {
@@ -107,10 +95,5 @@ public class MainActivity extends AppCompatActivity {
                 != PackageManager.PERMISSION_GRANTED) {
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS);
         }
-    }
-
-    @NonNull
-    private String formatTime(int hour, int minute) {
-        return String.format(Locale.getDefault(), "%02d:%02d", hour, minute);
     }
 }

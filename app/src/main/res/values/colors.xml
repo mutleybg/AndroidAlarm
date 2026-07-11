@@ -4,4 +4,9 @@
     <color name="purple_700">#FF4F378B</color>
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
+
+    <!-- Alarm UI: hand-drawn-style beige for selected days, black outlines. -->
+    <color name="day_selected">#FFE8E0D5</color>
+    <color name="day_unselected">#FFFFFFFF</color>
+    <color name="outline">#FF1C1B1F</color>
 </resources>

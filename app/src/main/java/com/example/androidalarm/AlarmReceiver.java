@@ -5,16 +5,17 @@ import android.content.Context;
 import android.content.Intent;
 
 /**
- * Fired by AlarmManager when the alarm is due. Launches the full-screen ring
- * activity. Because the alarm is one-shot, we do not re-schedule it here — the
- * user must set it again (kept intentionally simple).
+ * Fired by AlarmManager when an alarm is due. Re-arms repeating alarms (or turns
+ * off one-shot ones) and launches the full-screen ring activity.
  */
 public class AlarmReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        // The alarm has fired, so it is no longer pending. Mark it disabled.
-        AlarmScheduler.cancel(context);
+        int index = intent.getIntExtra(AlarmScheduler.EXTRA_INDEX, 0);
+
+        // Re-arm for the next weekday, or disable if this was a one-shot.
+        AlarmScheduler.onFired(context, index);
 
         Intent ring = new Intent(context, AlarmRingActivity.class);
         ring.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

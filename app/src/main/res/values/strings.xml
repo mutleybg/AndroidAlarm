@@ -1,13 +1,26 @@
 <resources>
-    <string name="app_name">AndroidAlarm</string>
-    <string name="pick_a_time">Pick a time</string>
-    <string name="set_alarm">Set alarm</string>
-    <string name="cancel_alarm">Cancel alarm</string>
-    <string name="status_off">No alarm set</string>
-    <string name="status_on">Alarm set for %1$s</string>
-    <string name="alarm_set_for">Alarm set for %1$s</string>
+    <!-- App name is kept as the Bulgarian brand name in every locale. -->
+    <string name="app_name">Аларма</string>
+
+    <!-- Alarm panel labels (English default; see values-bg for Bulgarian). -->
+    <string name="alarm_title">Alarm %1$d</string>
+    <string name="label_hour">Hour</string>
+    <string name="label_min">Min</string>
+
+    <!-- Seven weekday letters, Monday first. -->
+    <string-array name="day_letters">
+        <item>M</item>
+        <item>T</item>
+        <item>W</item>
+        <item>T</item>
+        <item>F</item>
+        <item>S</item>
+        <item>S</item>
+    </string-array>
+
+    <!-- Ring screen + permission messages. -->
     <string name="alarm_ringing">Alarm!</string>
     <string name="dismiss">Dismiss</string>
     <string name="notifications_denied">Notifications are disabled; the alarm may not alert you.</string>
-    <string name="grant_exact_alarm">Please allow exact alarms for this app, then tap Set again.</string>
+    <string name="grant_exact_alarm">Please allow exact alarms for this app, then enable the alarm again.</string>
 </resources>

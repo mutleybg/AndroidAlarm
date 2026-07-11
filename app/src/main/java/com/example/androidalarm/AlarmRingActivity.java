@@ -7,8 +7,6 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import com.example.androidalarm.databinding.ActivityRingBinding;
 
 /**
@@ -16,7 +14,7 @@ import com.example.androidalarm.databinding.ActivityRingBinding;
  * ringtone and vibrates until the user dismisses it. Declared in the manifest
  * with showWhenLocked/turnScreenOn so it appears over the lock screen.
  */
-public class AlarmRingActivity extends AppCompatActivity {
+public class AlarmRingActivity extends BaseActivity {
 
     private Ringtone ringtone;
     private Vibrator vibrator;
