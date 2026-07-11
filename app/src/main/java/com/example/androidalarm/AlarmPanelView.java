@@ -1,13 +1,15 @@
 package com.example.androidalarm;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.ViewParent;
 import android.widget.LinearLayout;
+import android.widget.NumberPicker;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
@@ -15,8 +17,9 @@ import androidx.annotation.Nullable;
 import com.example.androidalarm.databinding.ViewAlarmPanelBinding;
 
 /**
- * The controls for a single alarm: a title, Hour and Min numeric fields, an
- * on/off switch, and a row of seven day toggles (Monday-first). Emits a single
+ * The controls for a single alarm: a title, Hour and Min scroller pickers, a
+ * row of seven day toggles (Monday-first) under a "Days Of Week" heading, and
+ * an on/off switch with an On/Off state label. Emits a single
  * {@link OnChangeListener#onChanged()} whenever the user edits anything.
  */
 public class AlarmPanelView extends LinearLayout {
@@ -27,6 +30,8 @@ public class AlarmPanelView extends LinearLayout {
     }
 
     private static final int DAY_COUNT = 7;
+    /** Minutes are picked in 5-minute steps (0, 5, ... 55). */
+    private static final int MINUTE_STEP = 5;
 
     private final ViewAlarmPanelBinding binding;
     private final TextView[] dayViews = new TextView[DAY_COUNT];
@@ -43,12 +48,56 @@ public class AlarmPanelView extends LinearLayout {
 
         binding.hourLabel.setText(R.string.label_hour);
         binding.minLabel.setText(R.string.label_min);
+        binding.daysLabel.setText(R.string.label_days_of_week);
+        setupPickers();
         buildDayToggles(context);
 
-        TextWatcher watcher = new SimpleTextWatcher(this::notifyChanged);
-        binding.hourField.addTextChangedListener(watcher);
-        binding.minField.addTextChangedListener(watcher);
-        binding.enableSwitch.setOnCheckedChangeListener((b, checked) -> notifyChanged());
+        binding.hourPicker.setOnValueChangedListener((p, o, n) -> notifyChanged());
+        binding.minPicker.setOnValueChangedListener((p, o, n) -> notifyChanged());
+        binding.enableSwitch.setOnCheckedChangeListener((b, checked) -> {
+            updateStateLabel(checked);
+            notifyChanged();
+        });
+        updateStateLabel(binding.enableSwitch.isChecked());
+    }
+
+    private void setupPickers() {
+        binding.hourPicker.setMinValue(0);
+        binding.hourPicker.setMaxValue(23);
+        binding.hourPicker.setFormatter(value -> two(value));
+        binding.hourPicker.setWrapSelectorWheel(true);
+
+        int minuteSteps = 60 / MINUTE_STEP;
+        String[] minuteLabels = new String[minuteSteps];
+        for (int i = 0; i < minuteSteps; i++) {
+            minuteLabels[i] = two(i * MINUTE_STEP);
+        }
+        binding.minPicker.setMinValue(0);
+        binding.minPicker.setMaxValue(minuteSteps - 1);
+        binding.minPicker.setDisplayedValues(minuteLabels);
+        binding.minPicker.setWrapSelectorWheel(true);
+
+        // On small screens the panels live inside a ScrollView; make sure a
+        // drag on a picker changes its value instead of scrolling the page.
+        keepScrollFromStealing(binding.hourPicker);
+        keepScrollFromStealing(binding.minPicker);
+    }
+
+    /**
+     * Stops an ancestor scroll container from intercepting vertical drags on a
+     * picker. Returns false so the picker still handles the touch itself.
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private static void keepScrollFromStealing(NumberPicker picker) {
+        picker.setOnTouchListener((v, event) -> {
+            if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+                ViewParent parent = v.getParent();
+                if (parent != null) {
+                    parent.requestDisallowInterceptTouchEvent(true);
+                }
+            }
+            return false;
+        });
     }
 
     private void buildDayToggles(Context context) {
@@ -85,21 +134,22 @@ public class AlarmPanelView extends LinearLayout {
     /** Loads saved settings into the views without firing change callbacks. */
     public void setState(int hour, int minute, int daysMask, boolean enabled) {
         loading = true;
-        binding.hourField.setText(two(hour));
-        binding.minField.setText(two(minute));
+        binding.hourPicker.setValue(clamp(hour, 23));
+        binding.minPicker.setValue(clamp(minute / MINUTE_STEP, 60 / MINUTE_STEP - 1));
         for (int i = 0; i < DAY_COUNT; i++) {
             dayViews[i].setSelected((daysMask & (1 << i)) != 0);
         }
         binding.enableSwitch.setChecked(enabled);
+        updateStateLabel(enabled);
         loading = false;
     }
 
     public int getHour() {
-        return clamp(parse(binding.hourField.getText().toString()), 23);
+        return binding.hourPicker.getValue();
     }
 
     public int getMinute() {
-        return clamp(parse(binding.minField.getText().toString()), 59);
+        return binding.minPicker.getValue() * MINUTE_STEP;
     }
 
     public int getDaysMask() {
@@ -120,23 +170,17 @@ public class AlarmPanelView extends LinearLayout {
     public void setSwitchChecked(boolean checked) {
         loading = true;
         binding.enableSwitch.setChecked(checked);
+        updateStateLabel(checked);
         loading = false;
+    }
+
+    private void updateStateLabel(boolean checked) {
+        binding.stateLabel.setText(checked ? R.string.state_on : R.string.state_off);
     }
 
     private void notifyChanged() {
         if (!loading && listener != null) {
             listener.onChanged();
-        }
-    }
-
-    private static int parse(String text) {
-        if (text == null || text.isEmpty()) {
-            return 0;
-        }
-        try {
-            return Integer.parseInt(text.trim());
-        } catch (NumberFormatException e) {
-            return 0;
         }
     }
 
@@ -153,27 +197,5 @@ public class AlarmPanelView extends LinearLayout {
 
     private int dp(int value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
-    }
-
-    /** TextWatcher that just forwards afterTextChanged to a Runnable. */
-    private static final class SimpleTextWatcher implements TextWatcher {
-        private final Runnable onChange;
-
-        SimpleTextWatcher(Runnable onChange) {
-            this.onChange = onChange;
-        }
-
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        }
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {
-            onChange.run();
-        }
     }
 }

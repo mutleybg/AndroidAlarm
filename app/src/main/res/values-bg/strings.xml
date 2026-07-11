@@ -4,6 +4,9 @@
     <string name="alarm_title">Аларма %1$d</string>
     <string name="label_hour">Час</string>
     <string name="label_min">Мин</string>
+    <string name="label_days_of_week">Дни от седмицата</string>
+    <string name="state_on">Включена</string>
+    <string name="state_off">Изключена</string>
 
     <!-- Понеделник, Вторник, Сряда, Четвъртък, Петък, Събота, Неделя -->
     <string-array name="day_letters">

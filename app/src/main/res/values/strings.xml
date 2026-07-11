@@ -6,6 +6,9 @@
     <string name="alarm_title">Alarm %1$d</string>
     <string name="label_hour">Hour</string>
     <string name="label_min">Min</string>
+    <string name="label_days_of_week">Days Of Week</string>
+    <string name="state_on">On</string>
+    <string name="state_off">Off</string>
 
     <!-- Seven weekday letters, Monday first. -->
     <string-array name="day_letters">
