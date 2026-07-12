@@ -11,18 +11,17 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ServiceInfo;
 import android.media.AudioAttributes;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.VibrationEffect;
-import android.os.Vibrator;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+
+import java.io.IOException;
 
 /**
  * Foreground service that actually rings the alarm. It is started by
@@ -33,9 +32,9 @@ import androidx.core.app.NotificationCompat;
  * to {@link AlarmRingActivity}; the system launches that over the lock screen —
  * the sanctioned way to surface an alarm UI from the background, where a plain
  * {@code startActivity()} is blocked on modern Android. The service — not the
- * activity — owns the ring sound, vibration, the one-minute auto-timeout and the
- * single automatic re-ring, so the alarm behaves correctly whether or not the
- * ring screen is actually on top.
+ * activity — owns the ring sound, the one-minute auto-timeout and the single
+ * automatic re-ring, so the alarm behaves correctly whether or not the ring
+ * screen is actually on top.
  */
 public class AlarmService extends Service {
 
@@ -45,8 +44,7 @@ public class AlarmService extends Service {
     private static final String CHANNEL_ID = "alarm_ring";
     private static final int NOTIFICATION_ID = 3000;
 
-    private Ringtone ringtone;
-    private Vibrator vibrator;
+    private MediaPlayer mediaPlayer;
     private final Handler timeoutHandler = new Handler(Looper.getMainLooper());
     private final Runnable ringTimeout = this::onRingTimeout;
 
@@ -87,7 +85,6 @@ public class AlarmService extends Service {
 
         startInForeground();
         startRinging();
-        startVibrating();
         // Let a power-button press (screen off) stop the alarm.
         registerScreenOff();
         // Give up ringing after a minute if the user never dismisses it.
@@ -110,7 +107,6 @@ public class AlarmService extends Service {
         timeoutHandler.removeCallbacks(ringTimeout);
         unregisterScreenOff();
         stopRinging();
-        stopVibrating();
         // Close the ring screen too, if it happens to be showing.
         sendBroadcast(new Intent(AlarmRingActivity.ACTION_FINISH).setPackage(getPackageName()));
         stopForeground(STOP_FOREGROUND_REMOVE);
@@ -176,43 +172,36 @@ public class AlarmService extends Service {
 
     private void startRinging() {
         // The alarm sound is bundled with the app (res/raw/alarm_ringtone.mp3).
+        // MediaPlayer (not Ringtone) is used because it loops reliably: a looping
+        // Ringtone stops after one pass on some devices, cutting the ring short.
         Uri alarmUri = Uri.parse(
                 "android.resource://" + getPackageName() + "/" + R.raw.alarm_ringtone);
-        ringtone = RingtoneManager.getRingtone(this, alarmUri);
-        if (ringtone != null) {
-            // Play on the alarm stream so it is audible even at low media volume.
-            ringtone.setAudioAttributes(new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build());
-            // Loop so a short ringtone keeps sounding for the whole ring window.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                ringtone.setLooping(true);
-            }
-            ringtone.play();
+        mediaPlayer = new MediaPlayer();
+        // Play on the alarm stream so it is audible even at low media volume.
+        mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build());
+        // Loop so a short clip keeps sounding for the whole ring window.
+        mediaPlayer.setLooping(true);
+        try {
+            mediaPlayer.setDataSource(this, alarmUri);
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+        } catch (IOException | IllegalStateException e) {
+            // Couldn't play the bundled sound; release so we don't leak it.
+            mediaPlayer.release();
+            mediaPlayer = null;
         }
     }
 
     private void stopRinging() {
-        if (ringtone != null && ringtone.isPlaying()) {
-            ringtone.stop();
-        }
-        ringtone = null;
-    }
-
-    private void startVibrating() {
-        vibrator = getSystemService(Vibrator.class);
-        if (vibrator == null || !vibrator.hasVibrator()) {
-            return;
-        }
-        long[] pattern = {0, 1000, 1000};
-        vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0));
-    }
-
-    private void stopVibrating() {
-        if (vibrator != null) {
-            vibrator.cancel();
-            vibrator = null;
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+            }
+            mediaPlayer.release();
+            mediaPlayer = null;
         }
     }
 
@@ -221,7 +210,6 @@ public class AlarmService extends Service {
         timeoutHandler.removeCallbacks(ringTimeout);
         unregisterScreenOff();
         stopRinging();
-        stopVibrating();
         super.onDestroy();
     }
 
