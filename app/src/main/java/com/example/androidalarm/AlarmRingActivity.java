@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.WindowManager;
 
 import com.example.androidalarm.databinding.ActivityRingBinding;
 
@@ -33,6 +34,10 @@ public class AlarmRingActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Keep the screen on while ringing so it never times out on its own —
+        // that way an actual screen-off means the user pressed the power button,
+        // which the service listens for to stop the alarm.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         ActivityRingBinding binding = ActivityRingBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 

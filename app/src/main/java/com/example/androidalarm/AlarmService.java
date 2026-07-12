@@ -5,7 +5,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ServiceInfo;
 import android.media.AudioAttributes;
 import android.media.Ringtone;
@@ -51,6 +54,23 @@ public class AlarmService extends Service {
     /** True when this is the automatic re-ring (so it must not schedule another). */
     private boolean rerun;
 
+    /**
+     * Stops the alarm when the screen turns off, i.e. the user pressed the power
+     * button while it was ringing. Apps can't observe {@code KEYCODE_POWER}
+     * directly, but a power press turns the screen off, which fires this system
+     * broadcast — so we treat it exactly like tapping "Dismiss".
+     */
+    private final BroadcastReceiver screenOffReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())) {
+                AlarmScheduler.cancelRerun(AlarmService.this, index);
+                stopEverything();
+            }
+        }
+    };
+    private boolean screenOffRegistered;
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent != null ? intent.getAction() : null;
@@ -68,6 +88,8 @@ public class AlarmService extends Service {
         startInForeground();
         startRinging();
         startVibrating();
+        // Let a power-button press (screen off) stop the alarm.
+        registerScreenOff();
         // Give up ringing after a minute if the user never dismisses it.
         timeoutHandler.removeCallbacks(ringTimeout);
         timeoutHandler.postDelayed(ringTimeout, AlarmScheduler.RING_TIMEOUT_MS);
@@ -86,6 +108,7 @@ public class AlarmService extends Service {
 
     private void stopEverything() {
         timeoutHandler.removeCallbacks(ringTimeout);
+        unregisterScreenOff();
         stopRinging();
         stopVibrating();
         // Close the ring screen too, if it happens to be showing.
@@ -127,6 +150,27 @@ public class AlarmService extends Service {
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
         } else {
             startForeground(NOTIFICATION_ID, notification);
+        }
+    }
+
+    /** Starts listening for the screen turning off (power button) while ringing. */
+    private void registerScreenOff() {
+        if (screenOffRegistered) {
+            return;
+        }
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(screenOffReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(screenOffReceiver, filter);
+        }
+        screenOffRegistered = true;
+    }
+
+    private void unregisterScreenOff() {
+        if (screenOffRegistered) {
+            unregisterReceiver(screenOffReceiver);
+            screenOffRegistered = false;
         }
     }
 
@@ -175,6 +219,7 @@ public class AlarmService extends Service {
     @Override
     public void onDestroy() {
         timeoutHandler.removeCallbacks(ringTimeout);
+        unregisterScreenOff();
         stopRinging();
         stopVibrating();
         super.onDestroy();
