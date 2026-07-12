@@ -44,7 +44,7 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+    setContentView(binding.getRoot());
 
         panels = new AlarmPanelView[]{binding.alarmPanel1, binding.alarmPanel2};
         for (int i = 0; i < panels.length; i++) {
