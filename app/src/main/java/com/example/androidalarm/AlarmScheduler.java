@@ -21,7 +21,7 @@ import java.util.Calendar;
 public final class AlarmScheduler {
 
     /** Number of independent alarms the UI exposes. */
-    public static final int ALARM_COUNT = 2;
+    public static final int ALARM_COUNT = 1;
 
     private static final String PREFS = "alarm_prefs";
     private static final String KEY_HOUR = "hour";

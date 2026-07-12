@@ -19,19 +19,22 @@ import com.example.androidalarm.databinding.ActivityMainBinding;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 /**
- * The main screen: two alarm panels, each taking half the screen. Every edit is
- * saved and (re)scheduled immediately. Also handles the two permission gates
- * modern Android imposes on alarm apps: notifications (Android 13+) and
- * exact-alarm scheduling (Android 12+).
+ * The main screen: a single alarm panel filling the screen. Every edit is saved
+ * and (re)scheduled immediately. Also handles the two permission gates modern
+ * Android imposes on alarm apps: notifications (Android 13+) and exact-alarm
+ * scheduling (Android 12+).
  */
 public class MainActivity extends BaseActivity {
+
+    /** The one alarm this app manages. */
+    private static final int ALARM_INDEX = 0;
 
     /** Prefs for one-off UI state (kept separate from the alarm data). */
     private static final String UI_PREFS = "ui_prefs";
     private static final String KEY_RELIABILITY_HINT_SHOWN = "reliability_hint_shown";
 
     private ActivityMainBinding binding;
-    private AlarmPanelView[] panels;
+    private AlarmPanelView panel;
 
     private final ActivityResultLauncher<String> notificationPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
@@ -44,27 +47,34 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
-    setContentView(binding.getRoot());
+        setContentView(binding.getRoot());
 
-        panels = new AlarmPanelView[]{binding.alarmPanel1, binding.alarmPanel2};
-        for (int i = 0; i < panels.length; i++) {
-            final int index = i;
-            AlarmPanelView panel = panels[i];
-            panel.setTitle(getString(R.string.alarm_title, i + 1));
-            panel.setState(
-                    AlarmScheduler.getHour(this, i),
-                    AlarmScheduler.getMinute(this, i),
-                    AlarmScheduler.getDaysMask(this, i),
-                    AlarmScheduler.isEnabled(this, i));
-            panel.setOnChangeListener(() -> onPanelChanged(index));
-        }
+        panel = binding.alarmPanel;
+        panel.setTitle(getString(R.string.alarm_title));
+        loadPanelState();
+        panel.setOnChangeListener(this::onPanelChanged);
 
         maybeRequestNotificationPermission();
     }
 
-    /** A panel changed: enforce the exact-alarm gate, then save and schedule. */
-    private void onPanelChanged(int index) {
-        AlarmPanelView panel = panels[index];
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Re-sync from storage: if the alarm fired (and turned itself off) while
+        // we were away, reflect that in the switch and countdown label.
+        loadPanelState();
+    }
+
+    /** Loads the saved alarm settings into the panel (no change callbacks). */
+    private void loadPanelState() {
+        panel.setState(
+                AlarmScheduler.getHour(this, ALARM_INDEX),
+                AlarmScheduler.getMinute(this, ALARM_INDEX),
+                AlarmScheduler.isEnabled(this, ALARM_INDEX));
+    }
+
+    /** The panel changed: enforce the exact-alarm gate, then save and schedule. */
+    private void onPanelChanged() {
         boolean enabled = panel.isAlarmEnabled();
 
         if (enabled && !canScheduleExactAlarms()) {
@@ -73,9 +83,11 @@ public class MainActivity extends BaseActivity {
             return;
         }
 
-        AlarmScheduler.save(this, index,
-                panel.getHour(), panel.getMinute(), panel.getDaysMask(), enabled);
-        AlarmScheduler.apply(this, index);
+        // No weekday repeat in this variant: a plain daysMask of 0 means the
+        // alarm fires once and then disables itself (see AlarmScheduler.onFired).
+        AlarmScheduler.save(this, ALARM_INDEX,
+                panel.getHour(), panel.getMinute(), 0, enabled);
+        AlarmScheduler.apply(this, ALARM_INDEX);
 
         if (enabled) {
             maybeShowReliabilityHint();

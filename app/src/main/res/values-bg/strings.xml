@@ -1,23 +1,12 @@
 <resources>
-    <string name="app_name">Аларма 2</string>
+    <string name="app_name">Аларма</string>
 
-    <string name="alarm_title">Аларма %1$d</string>
+    <string name="alarm_title">Аларма</string>
     <string name="label_hour">Час</string>
     <string name="label_min">Мин</string>
-    <string name="label_days_of_week">Дни от седмицата</string>
-    <string name="state_on">Включена</string>
-    <string name="state_off">Изключена</string>
-
-    <!-- Понеделник, Вторник, Сряда, Четвъртък, Петък, Събота, Неделя -->
-    <string-array name="day_letters">
-        <item>П</item>
-        <item>В</item>
-        <item>С</item>
-        <item>Ч</item>
-        <item>П</item>
-        <item>С</item>
-        <item>Н</item>
-    </string-array>
+    <string name="state_off">Алармата е изключена</string>
+    <!-- Two-line countdown; keep the \n line break. -->
+    <string name="state_on_countdown">Алармата звъни след\n%1$d часа и %2$d минути</string>
 
     <string name="alarm_channel_name">Аларма</string>
     <string name="alarm_channel_desc">Показва звънящата аларма</string>

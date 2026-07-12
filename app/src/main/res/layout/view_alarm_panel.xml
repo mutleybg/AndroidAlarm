@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  One alarm's controls: title, Hour/Min scroller pickers, a "Days Of Week"
-  label above a row of seven day toggles, and an on/off switch with a state
-  label beneath the toggles. Inflated by AlarmPanelView (merged into its root).
+  One alarm's controls: a title, Hour/Min scroller pickers, an on/off switch,
+  and a state label beneath the switch (either "off" or a two-line countdown).
+  Inflated by AlarmPanelView (merged into its root).
 -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:textAppearance="?attr/textAppearanceHeadlineMedium"
-        tools:text="Alarm 1" />
+        tools:text="Аларма" />
 
     <!-- Hour picker | Min picker -->
     <LinearLayout
@@ -67,45 +67,22 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- "Days Of Week" heading above the day toggles. -->
+    <!-- On/off switch, centred. -->
+    <com.google.android.material.materialswitch.MaterialSwitch
+        android:id="@+id/enableSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp" />
+
+    <!-- State label below the switch: "off" text or a two-line countdown. -->
     <TextView
-        android:id="@+id/daysLabel"
+        android:id="@+id/stateLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:gravity="center"
         android:textAppearance="?attr/textAppearanceTitleMedium"
-        tools:text="Days Of Week" />
-
-    <!-- Seven day toggles are added programmatically into this row. -->
-    <LinearLayout
-        android:id="@+id/daysRow"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal" />
-
-    <!-- On/off switch with a state label to its right, below the toggles. -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="12dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/enableSwitch"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
-        <TextView
-            android:id="@+id/stateLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:textAppearance="?attr/textAppearanceTitleMedium"
-            tools:text="On" />
-    </LinearLayout>
+        tools:text="The alarm is off" />
 
 </merge>

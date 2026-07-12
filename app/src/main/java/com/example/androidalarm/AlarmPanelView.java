@@ -2,39 +2,49 @@ package com.example.androidalarm;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
-import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ViewParent;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
 import com.example.androidalarm.databinding.ViewAlarmPanelBinding;
 
 /**
- * The controls for a single alarm: a title, Hour and Min scroller pickers, a
- * row of seven day toggles (Monday-first) under a "Days Of Week" heading, and
- * an on/off switch with an On/Off state label. Emits a single
- * {@link OnChangeListener#onChanged()} whenever the user edits anything.
+ * The controls for a single alarm: a title, Hour and Min scroller pickers, an
+ * on/off switch, and a state label below it. When the switch is off the label
+ * reads "the alarm is off"; when it is on the label shows a two-line countdown
+ * to the next trigger, refreshed every {@link #REFRESH_INTERVAL_MS}. Emits a
+ * single {@link OnChangeListener#onChanged()} whenever the user edits anything.
  */
 public class AlarmPanelView extends LinearLayout {
 
-    /** Notified after any user edit (time, day toggle or switch). */
+    /** Notified after any user edit (time or switch). */
     public interface OnChangeListener {
         void onChanged();
     }
 
-    private static final int DAY_COUNT = 7;
     /** Minutes are picked in 5-minute steps (0, 5, ... 55). */
     private static final int MINUTE_STEP = 5;
+    /** How often the on-state countdown label is refreshed (ms). */
+    private static final long REFRESH_INTERVAL_MS = 10_000L;
 
     private final ViewAlarmPanelBinding binding;
-    private final TextView[] dayViews = new TextView[DAY_COUNT];
+    private final Handler handler = new Handler(Looper.getMainLooper());
+
+    /** Periodically refreshes the countdown label while the alarm is on. */
+    private final Runnable ticker = new Runnable() {
+        @Override
+        public void run() {
+            refreshStateLabel();
+            handler.postDelayed(this, REFRESH_INTERVAL_MS);
+        }
+    };
 
     @Nullable
     private OnChangeListener listener;
@@ -48,17 +58,21 @@ public class AlarmPanelView extends LinearLayout {
 
         binding.hourLabel.setText(R.string.label_hour);
         binding.minLabel.setText(R.string.label_min);
-        binding.daysLabel.setText(R.string.label_days_of_week);
         setupPickers();
-        buildDayToggles(context);
 
-        binding.hourPicker.setOnValueChangedListener((p, o, n) -> notifyChanged());
-        binding.minPicker.setOnValueChangedListener((p, o, n) -> notifyChanged());
-        binding.enableSwitch.setOnCheckedChangeListener((b, checked) -> {
-            updateStateLabel(checked);
+        binding.hourPicker.setOnValueChangedListener((p, o, n) -> {
+            refreshStateLabel();
             notifyChanged();
         });
-        updateStateLabel(binding.enableSwitch.isChecked());
+        binding.minPicker.setOnValueChangedListener((p, o, n) -> {
+            refreshStateLabel();
+            notifyChanged();
+        });
+        binding.enableSwitch.setOnCheckedChangeListener((b, checked) -> {
+            applyEnabledState(checked);
+            notifyChanged();
+        });
+        applyEnabledState(binding.enableSwitch.isChecked());
     }
 
     private void setupPickers() {
@@ -77,7 +91,7 @@ public class AlarmPanelView extends LinearLayout {
         binding.minPicker.setDisplayedValues(minuteLabels);
         binding.minPicker.setWrapSelectorWheel(true);
 
-        // On small screens the panels live inside a ScrollView; make sure a
+        // On small screens the panel lives inside a ScrollView; make sure a
         // drag on a picker changes its value instead of scrolling the page.
         keepScrollFromStealing(binding.hourPicker);
         keepScrollFromStealing(binding.minPicker);
@@ -100,29 +114,6 @@ public class AlarmPanelView extends LinearLayout {
         });
     }
 
-    private void buildDayToggles(Context context) {
-        String[] letters = getResources().getStringArray(R.array.day_letters);
-        int size = dp(44);
-        int margin = dp(3);
-        for (int i = 0; i < DAY_COUNT; i++) {
-            TextView day = new TextView(context);
-            LayoutParams lp = new LayoutParams(0, size, 1f);
-            lp.setMargins(margin, 0, margin, 0);
-            day.setLayoutParams(lp);
-            day.setGravity(Gravity.CENTER);
-            day.setBackgroundResource(R.drawable.day_circle_bg);
-            day.setText(letters[i]);
-            day.setTextColor(getResources().getColor(R.color.black, context.getTheme()));
-            day.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-            day.setOnClickListener(v -> {
-                v.setSelected(!v.isSelected());
-                notifyChanged();
-            });
-            dayViews[i] = day;
-            binding.daysRow.addView(day);
-        }
-    }
-
     public void setOnChangeListener(@Nullable OnChangeListener listener) {
         this.listener = listener;
     }
@@ -132,15 +123,12 @@ public class AlarmPanelView extends LinearLayout {
     }
 
     /** Loads saved settings into the views without firing change callbacks. */
-    public void setState(int hour, int minute, int daysMask, boolean enabled) {
+    public void setState(int hour, int minute, boolean enabled) {
         loading = true;
         binding.hourPicker.setValue(clamp(hour, 23));
         binding.minPicker.setValue(clamp(minute / MINUTE_STEP, 60 / MINUTE_STEP - 1));
-        for (int i = 0; i < DAY_COUNT; i++) {
-            dayViews[i].setSelected((daysMask & (1 << i)) != 0);
-        }
         binding.enableSwitch.setChecked(enabled);
-        updateStateLabel(enabled);
+        applyEnabledState(enabled);
         loading = false;
     }
 
@@ -152,16 +140,6 @@ public class AlarmPanelView extends LinearLayout {
         return binding.minPicker.getValue() * MINUTE_STEP;
     }
 
-    public int getDaysMask() {
-        int mask = 0;
-        for (int i = 0; i < DAY_COUNT; i++) {
-            if (dayViews[i].isSelected()) {
-                mask |= (1 << i);
-            }
-        }
-        return mask;
-    }
-
     public boolean isAlarmEnabled() {
         return binding.enableSwitch.isChecked();
     }
@@ -170,12 +148,61 @@ public class AlarmPanelView extends LinearLayout {
     public void setSwitchChecked(boolean checked) {
         loading = true;
         binding.enableSwitch.setChecked(checked);
-        updateStateLabel(checked);
+        applyEnabledState(checked);
         loading = false;
     }
 
-    private void updateStateLabel(boolean checked) {
-        binding.stateLabel.setText(checked ? R.string.state_on : R.string.state_off);
+    /** Updates the label and starts/stops the countdown ticker for a state. */
+    private void applyEnabledState(boolean enabled) {
+        if (enabled) {
+            startTicking();
+        } else {
+            stopTicking();
+            refreshStateLabel();
+        }
+    }
+
+    /**
+     * Refreshes the state label: the "off" text when disabled, or a two-line
+     * countdown ("... in XX hours and YY minutes") to the next trigger when on.
+     */
+    private void refreshStateLabel() {
+        if (!binding.enableSwitch.isChecked()) {
+            binding.stateLabel.setText(R.string.state_off);
+            return;
+        }
+        long remaining = AlarmScheduler.nextTrigger(getHour(), getMinute(), 0)
+                - System.currentTimeMillis();
+        if (remaining < 0) {
+            remaining = 0;
+        }
+        long totalMinutes = Math.round(remaining / 60_000.0);
+        int hours = (int) (totalMinutes / 60);
+        int minutes = (int) (totalMinutes % 60);
+        binding.stateLabel.setText(
+                getContext().getString(R.string.state_on_countdown, hours, minutes));
+    }
+
+    private void startTicking() {
+        handler.removeCallbacks(ticker);
+        // Runs immediately (refreshes the label now), then every interval.
+        handler.post(ticker);
+    }
+
+    private void stopTicking() {
+        handler.removeCallbacks(ticker);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        applyEnabledState(binding.enableSwitch.isChecked());
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        stopTicking();
+        super.onDetachedFromWindow();
     }
 
     private void notifyChanged() {
@@ -193,9 +220,5 @@ public class AlarmPanelView extends LinearLayout {
 
     private static String two(int value) {
         return String.format(java.util.Locale.US, "%02d", value);
-    }
-
-    private int dp(int value) {
-        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }

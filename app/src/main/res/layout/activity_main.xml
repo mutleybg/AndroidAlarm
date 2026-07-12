@@ -1,45 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Two alarms, each taking half the screen, split by a divider. Wrapped in a
-  ScrollView so that on very small / low-resolution screens the content scrolls
-  instead of clipping. fillViewport + wrap_content/weight panels means: when
-  there is spare room the two panels split the screen 50/50 (content centred);
-  when the content is taller than the screen each panel keeps its natural height
-  and the whole screen scrolls.
+  A single alarm filling the screen. Wrapped in a ScrollView so that on very
+  small / low-resolution screens the content scrolls instead of clipping;
+  fillViewport lets the panel centre itself vertically when there is spare room.
 -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true">
 
-    <LinearLayout
+    <com.example.androidalarm.AlarmPanelView
+        android:id="@+id/alarmPanel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <com.example.androidalarm.AlarmPanelView
-            android:id="@+id/alarmPanel1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center_vertical"
-            android:padding="16dp" />
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="3dp"
-            android:background="@color/outline" />
-
-        <com.example.androidalarm.AlarmPanelView
-            android:id="@+id/alarmPanel2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center_vertical"
-            android:padding="16dp" />
-
-    </LinearLayout>
+        android:minHeight="0dp"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:padding="16dp" />
 
 </ScrollView>
