@@ -1,27 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  Full-screen ring UI. Wrapped in a ScrollView so the big Dismiss button can
+  never be clipped off-screen on short / low-resolution displays (e.g. landscape
+  on a small phone); fillViewport centres the content when there is spare room.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="24dp">
+    android:fillViewport="true">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/alarm_ringing"
-        android:textAppearance="?attr/textAppearanceHeadlineLarge" />
+        android:minHeight="0dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="24dp">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/dismissButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:paddingStart="96dp"
-        android:paddingEnd="96dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="24dp"
-        android:textSize="32sp"
-        android:text="@string/dismiss" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/alarm_ringing"
+            android:textAppearance="?attr/textAppearanceHeadlineLarge" />
 
-</LinearLayout>
+        <!-- Full-width (with margins) instead of large horizontal padding, so the
+             label can't overflow / ellipsize on narrow screens. Height comes from
+             the larger text + vertical padding. -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/dismissButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="48dp"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="24dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="24dp"
+            android:textSize="32sp"
+            android:text="@string/dismiss" />
+
+    </LinearLayout>
+
+</ScrollView>
