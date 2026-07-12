@@ -35,15 +35,25 @@ SKIP_BUILD=1 ./scripts/deploy-debug.sh
 
 **Connecting a phone:** plug it in over USB, enable *Developer options → USB
 debugging*, and accept the authorization prompt on the phone. Verify it is seen
-with `adb devices`. If **several** devices/emulators are attached, pass the
-target serial as the first argument or set `ANDROID_SERIAL`:
+with `adb devices`.
 
-```bash
-./scripts/deploy-debug.sh <serial>
-ANDROID_SERIAL=<serial> ./scripts/deploy-release.sh
-```
+**Which device gets the build:**
 
-If no phone is found, the deploy scripts stop with a clear message instead of
+- **One device** attached → it is used automatically.
+- **Several devices** attached and no serial given → the scripts deploy to the
+  first **non-emulator** device (a real phone is preferred over a running
+  emulator), printing a note about which one was chosen. If *only* emulators are
+  attached, the scripts stop and ask you to choose.
+- To **target a specific device** (overriding the above), pass its serial as the
+  first argument or set `ANDROID_SERIAL` (the serial is the first column of
+  `adb devices`, e.g. `emulator-5554`):
+
+  ```bash
+  ./scripts/deploy-debug.sh <serial>
+  ANDROID_SERIAL=<serial> ./scripts/deploy-release.sh
+  ```
+
+If no device is found, the deploy scripts stop with a clear message instead of
 failing obscurely.
 
 ### Signing the release APK
@@ -63,12 +73,18 @@ APK that cannot be installed. `build-release.sh` therefore signs it:
   ```
 
 Installing a build signed with a *different* key over an existing one is
-rejected by Android; rerun the release deploy with `REINSTALL=1` to uninstall
-the old copy first (this wipes the app's data):
+rejected by Android; rerun the deploy with `REINSTALL=1` to uninstall the old
+copy first (this wipes the app's data). Both deploy scripts support it:
 
 ```bash
 REINSTALL=1 ./scripts/deploy-release.sh
+REINSTALL=1 ./scripts/deploy-debug.sh
 ```
+
+A normal deploy already reinstalls in place (`adb install -r`, keeping data);
+use `REINSTALL=1` only when you need a clean install (e.g. a signing-key clash).
+Note: on some OEM ROMs (e.g. MIUI) a *fresh* install needs an on-screen
+confirmation on the phone, whereas an in-place update does not.
 
 
 The main screen shall look like this:

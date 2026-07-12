@@ -113,7 +113,16 @@ pick_device() {
   fi
 
   if [[ "$count" -gt 1 ]]; then
-    die "Multiple devices connected: $(printf '%s ' $devices). Choose one: pass its serial as an argument or set ANDROID_SERIAL."
+    # No explicit choice: prefer a real device over an emulator by picking the
+    # first serial that does not contain "emulator" (adb names emulators
+    # "emulator-<port>"). Set ANDROID_SERIAL / pass a serial to override.
+    local physical
+    physical="$(printf '%s\n' "$devices" | grep -v 'emulator' | head -1)"
+    if [[ -n "$physical" ]]; then
+      warn "Multiple devices connected; deploying to non-emulator device $physical. Set ANDROID_SERIAL to target another."
+      echo "$physical"; return 0
+    fi
+    die "Multiple devices connected but all are emulators: $(printf '%s ' $devices). Choose one: pass its serial as an argument or set ANDROID_SERIAL."
   fi
 
   printf '%s\n' "$devices" | head -1
