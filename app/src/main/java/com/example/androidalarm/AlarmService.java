@@ -131,7 +131,7 @@ public class AlarmService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_launcher)
+                .setSmallIcon(R.drawable.ic_alarm_notification)
                 .setContentTitle(getString(R.string.alarm_ringing))
                 .setContentText(getString(R.string.app_name))
                 .setCategory(NotificationCompat.CATEGORY_ALARM)

@@ -1,10 +1,10 @@
 <resources>
     <!-- App name is kept as the Bulgarian brand name in every locale. -->
-    <string name="app_name">Аларма</string>
+    <string name="app_name">Будилник</string>
 
     <!-- Alarm panel labels (English default; see values-bg for Bulgarian).
          The title is the constant brand name, like app_name. -->
-    <string name="alarm_title">Аларма</string>
+    <string name="alarm_title">Будилник</string>
     <string name="label_hour">Hour</string>
     <string name="label_min">Min</string>
     <string name="state_off">The alarm is off</string>
@@ -12,11 +12,11 @@
     <string name="state_on_countdown">The alarm will be triggered\nin %1$d hours and %2$d minutes.</string>
 
     <!-- Notification channel for the ringing alarm. -->
-    <string name="alarm_channel_name">Alarm</string>
+    <string name="alarm_channel_name">Будилник</string>
     <string name="alarm_channel_desc">Shows the ringing alarm</string>
 
     <!-- Ring screen + permission messages. -->
-    <string name="alarm_ringing">Alarm!</string>
+    <string name="alarm_ringing">Будилник!</string>
     <string name="dismiss">Dismiss</string>
     <string name="notifications_denied">Notifications are disabled; the alarm may not alert you.</string>
     <string name="grant_exact_alarm">Please allow exact alarms for this app, then enable the alarm again.</string>

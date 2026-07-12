@@ -2,6 +2,10 @@
 <resources>
     <color name="purple_500">#FF6750A4</color>
     <color name="purple_700">#FF4F378B</color>
+
+    <!-- App accent: light red. -->
+    <color name="light_red">#FFEF5350</color>
+    <color name="light_red_dark">#FFE53935</color>
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
 

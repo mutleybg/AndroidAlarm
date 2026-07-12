@@ -1,17 +1,17 @@
 <resources>
-    <string name="app_name">Аларма</string>
+    <string name="app_name">Будилник</string>
 
-    <string name="alarm_title">Аларма</string>
+    <string name="alarm_title">Будилник</string>
     <string name="label_hour">Час</string>
     <string name="label_min">Мин</string>
-    <string name="state_off">Алармата е изключена</string>
+    <string name="state_off">Будилникът е изключен</string>
     <!-- Two-line countdown; keep the \n line break. -->
-    <string name="state_on_countdown">Алармата звъни след\n%1$d часа и %2$d минути</string>
+    <string name="state_on_countdown">Будилникът звъни след\n%1$d часа и %2$d минути</string>
 
-    <string name="alarm_channel_name">Аларма</string>
+    <string name="alarm_channel_name">Будилник</string>
     <string name="alarm_channel_desc">Показва звънящата аларма</string>
 
-    <string name="alarm_ringing">Аларма!</string>
+    <string name="alarm_ringing">Будилник!</string>
     <string name="dismiss">Спри</string>
     <string name="notifications_denied">Известията са изключени; алармата може да не ви сигнализира.</string>
     <string name="grant_exact_alarm">Разрешете точни аларми за това приложение, след което включете алармата отново.</string>

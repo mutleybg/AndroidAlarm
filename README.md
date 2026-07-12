@@ -11,12 +11,12 @@ Helper scripts live in [`scripts/`](scripts/). They pick a compatible JDK
 scripts **auto-discover the connected phone** via `adb` — no serial needed for a
 single device.
 
-| Script | What it does | Output |
-| --- | --- | --- |
-| `scripts/build-debug.sh` | Builds the debug APK | `app/build/outputs/apk/debug/app-debug.apk` |
-| `scripts/build-release.sh` | Builds the production (release) APK and signs it (see signing note) | `app/build/outputs/apk/release/app-release.apk` |
-| `scripts/deploy-debug.sh` | Builds (unless `SKIP_BUILD=1`), installs the debug APK on the phone, and launches it | — |
-| `scripts/deploy-release.sh` | Builds (unless `SKIP_BUILD=1`), installs the release APK on the phone, and launches it | — |
+| Script                      | What it does                                                                           | Output                                          |
+|-----------------------------|----------------------------------------------------------------------------------------|-------------------------------------------------|
+| `scripts/build-debug.sh`    | Builds the debug APK                                                                   | `app/build/outputs/apk/debug/app-debug.apk`     |
+| `scripts/build-release.sh`  | Builds the production (release) APK and signs it (see signing note)                    | `app/build/outputs/apk/release/app-release.apk` |
+| `scripts/deploy-debug.sh`   | Builds (unless `SKIP_BUILD=1`), installs the debug APK on the phone, and launches it   | —                                               |
+| `scripts/deploy-release.sh` | Builds (unless `SKIP_BUILD=1`), installs the release APK on the phone, and launches it | —                                               |
 
 ### Usage
 
